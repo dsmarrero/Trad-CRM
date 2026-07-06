@@ -1,0 +1,4 @@
+ALTER TABLE idiomas_usuario ADD COLUMN IF NOT EXISTS tarifa_traduccion NUMERIC(6,4) DEFAULT 0.06;
+ALTER TABLE idiomas_usuario ADD COLUMN IF NOT EXISTS tarifa_jurada NUMERIC(6,4) DEFAULT 0.06;
+ALTER TABLE idiomas_usuario ADD COLUMN IF NOT EXISTS tarifa_revision NUMERIC(6,4) DEFAULT 0.03;
+ALTER TABLE idiomas_usuario ADD COLUMN IF NOT EXISTS tarifa_edicion_hora NUMERIC(6,2) DEFAULT 25.00;
