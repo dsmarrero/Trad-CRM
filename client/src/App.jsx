@@ -44,6 +44,30 @@ export default function App() {
             }
           />
           <Route
+            path="/clientes/:id/documentos"
+            element={
+              <RutaPrivada>
+                <ClienteDetalle tabInicial="Documentos" />
+              </RutaPrivada>
+            }
+          />
+          <Route
+            path="/clientes/:id/facturas"
+            element={
+              <RutaPrivada>
+                <ClienteDetalle tabInicial="Facturas" />
+              </RutaPrivada>
+            }
+          />
+          <Route
+            path="/clientes/:id/notas"
+            element={
+              <RutaPrivada>
+                <ClienteDetalle tabInicial="Notas" />
+              </RutaPrivada>
+            }
+          />
+          <Route
             path="/encargos"
             element={
               <RutaPrivada>
