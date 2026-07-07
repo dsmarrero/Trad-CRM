@@ -194,7 +194,28 @@ async function cambiarPassword(req, res) {
   }
 }
 
+async function eliminarUsuario(req, res) {
+  try {
+    const { id } = req.params;
+    if (Number(id) === req.usuario.id) {
+      return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta' });
+    }
+    const existe = await pool.query('SELECT id FROM usuarios WHERE id=$1', [id]);
+    if (existe.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    // Las notas de cliente son historial del cliente, no del usuario que las escribió:
+    // se desvincula el autor en vez de borrarlas o bloquear el borrado del usuario.
+    await pool.query('UPDATE cliente_notas SET usuario_id = NULL WHERE usuario_id=$1', [id]);
+    await pool.query('DELETE FROM usuarios WHERE id=$1', [id]);
+    res.json({ mensaje: 'Usuario eliminado' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar usuario' });
+  }
+}
+
 module.exports = {
   registrar, login, logout, obtenerConfig, actualizarConfig, subirLogo, descargarLogo,
-  obtenerPerfil, actualizarPerfil, cambiarPassword
+  obtenerPerfil, actualizarPerfil, cambiarPassword, eliminarUsuario
 };

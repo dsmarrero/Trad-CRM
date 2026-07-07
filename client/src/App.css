@@ -59,7 +59,7 @@ h1, h2 {
 }
 
 .login-form {
-  background: white;
+  background: var(--superficie);
   padding: 2.5rem;
   border-radius: 16px;
   width: 320px;

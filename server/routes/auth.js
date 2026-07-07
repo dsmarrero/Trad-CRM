@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const {
   registrar, login, logout, obtenerConfig, actualizarConfig, subirLogo, descargarLogo,
-  obtenerPerfil, actualizarPerfil, cambiarPassword
+  obtenerPerfil, actualizarPerfil, cambiarPassword, eliminarUsuario
 } = require('../controllers/usuariosController');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, soloAdmin } = require('../middleware/auth');
 const uploadLogo = require('../config/multerLogo');
 
 router.post('/registro', registrar);
@@ -17,5 +17,6 @@ router.get('/configuracion/logo', authMiddleware, descargarLogo);
 router.get('/perfil', authMiddleware, obtenerPerfil);
 router.put('/perfil', authMiddleware, actualizarPerfil);
 router.put('/perfil/password', authMiddleware, cambiarPassword);
+router.delete('/usuarios/:id', authMiddleware, soloAdmin, eliminarUsuario);
 
 module.exports = router;
