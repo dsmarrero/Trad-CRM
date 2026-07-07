@@ -491,19 +491,6 @@ a.tarjeta-alerta .tarjeta-label {
   max-width: 100%;
 }
 
-form.form-cliente, form.form-encargo, form.form-factura, form.form-documento, form.form-presupuesto {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  align-items: center;
-  background: var(--superficie);
-  padding: 1.3rem;
-  border-radius: 14px;
-  border: 1px solid var(--borde);
-  box-shadow: var(--sombra-tarjeta);
-  margin-bottom: 1.5rem;
-}
-
 form input, form select, form textarea {
   padding: 0.6rem 0.8rem;
   border: 1.5px solid var(--borde);
