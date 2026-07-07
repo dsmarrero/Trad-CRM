@@ -2,7 +2,10 @@
 
 CRM para un traductor jurado: clientes, encargos, presupuestos, facturación con PDF, gestión de documentos con recuento automático de palabras (OCR incluido) y recordatorios por email.
 
-- **Frontend:** https://trad-crm.netlify.app
+- **Frontend:** https://trad-crm.netlify.app 
+
+    (Cuenta de prueba: Email: usuario@prueba.com - Contraseña: prueba)
+
 - **API:** https://backend-production-4886.up.railway.app
 
 ## Funcionalidades
@@ -77,7 +80,3 @@ El esquema base de la base de datos está en `server/config/schema.sql`; las mig
 - **Frontend**: Netlify, build con `npm run build` (Vite) y `client/public/_redirects` para el enrutado de la SPA. Deploy con `netlify deploy --prod` desde `client/`.
 
 La cookie de sesión usa `sameSite: 'none'` en producción porque frontend y backend viven en dominios distintos.
-
-## Estado del proyecto
-
-No hay suite de tests automatizados; la verificación se hace manualmente (build + comprobación en navegador). El registro de cuentas (`POST /api/auth/registro`) requiere ser administrador autenticado — no hay alta pública.
