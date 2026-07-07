@@ -306,7 +306,7 @@ a.tarjeta-alerta .tarjeta-label {
 .tarjeta-valor {
   font-size: 1.6rem;
   font-weight: 800;
-  color: var(--naranja);
+  color: var(--texto);
 }
 
 .tarjeta-label {
@@ -1051,4 +1051,140 @@ td select {
   .sidebar {
     transition: none;
   }
+}
+
+/* PAGE HEADER */
+.page-header-descripcion {
+  margin: 0.3rem 0 0;
+  color: var(--gris);
+  font-size: 0.9rem;
+}
+.page-header-accion {
+  display: flex;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* BOTONES COMPARTIDOS */
+.btn-primario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--naranja);
+  color: white;
+  border: none;
+  padding: 0.65rem 1.3rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+.btn-primario:hover { background: #E15414; box-shadow: 0 4px 12px rgba(245,100,30,0.28); }
+.btn-primario:active { transform: translateY(1px); }
+.btn-primario:disabled { background: var(--gris); cursor: not-allowed; box-shadow: none; opacity: 0.6; }
+
+.btn-secundario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  color: var(--texto);
+  border: 1.5px solid var(--borde);
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.btn-secundario:hover { border-color: var(--naranja); color: var(--naranja); }
+.btn-secundario:disabled { cursor: not-allowed; opacity: 0.6; }
+
+.btn-fantasma {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: transparent;
+  border: 1.5px solid var(--borde);
+  color: var(--gris);
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  margin-right: 0.3rem;
+  transition: all 0.15s ease;
+}
+.btn-fantasma:hover { border-color: var(--naranja); color: var(--naranja); background: var(--naranja-suave); }
+
+/* EMPTY STATE */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: var(--gris);
+  background: var(--superficie);
+  border: 1px dashed var(--borde);
+  border-radius: 14px;
+}
+.empty-state-icono { color: var(--gris); opacity: 0.6; }
+.empty-state p { margin: 0; font-size: 0.9rem; }
+
+/* SEARCH INPUT */
+.search-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--superficie);
+  border: 1.5px solid var(--borde);
+  border-radius: 10px;
+  padding: 0.5rem 0.8rem;
+  color: var(--gris);
+  max-width: 320px;
+  margin-bottom: 1.2rem;
+}
+.search-input input {
+  border: none;
+  outline: none;
+  background: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--texto);
+  width: 100%;
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+}
+.search-input:focus-within { border-color: var(--naranja); }
+
+/* SKELETON */
+.skeleton-tabla { width: 100%; border-collapse: collapse; }
+.skeleton-tabla td { padding: 0.8rem 1rem; }
+.skeleton-bloque {
+  display: block;
+  height: 0.9rem;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--borde) 25%, var(--fondo) 50%, var(--borde) 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-bloque { animation: none; }
+}
+
+/* STAT CARD: el naranja ya no es el color por defecto de todos los valores */
+.tarjeta-alerta .tarjeta-valor {
+  color: var(--naranja);
 }
