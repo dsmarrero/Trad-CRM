@@ -18,6 +18,7 @@ const VACIO = {
 export default function Presupuestos() {
   const { items: presupuestos, error, setError, cargando, cargar, crear, eliminar } = useCrud('/presupuestos');
   const [clientes, setClientes] = useState([]);
+  const [idiomas, setIdiomas] = useState([]);
   const [form, setForm] = useState(VACIO);
   const [archivo, setArchivo] = useState(null);
   const [info, setInfo] = useState('');
@@ -28,6 +29,7 @@ export default function Presupuestos() {
 
   useEffect(() => {
     api.get('/clientes').then(setClientes).catch((err) => setError(err.message));
+    api.get('/idiomas').then(setIdiomas).catch((err) => setError(err.message));
   }, []);
 
   function handleChange(e) {
@@ -188,8 +190,22 @@ export default function Presupuestos() {
             <option value="">Selecciona cliente *</option>
             {clientes.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
-          <input name="idioma_origen" aria-label="Idioma origen" placeholder="Idioma origen *" value={form.idioma_origen} onChange={handleChange} required />
-          <input name="idioma_destino" aria-label="Idioma destino" placeholder="Idioma destino *" value={form.idioma_destino} onChange={handleChange} required />
+          <select
+            aria-label="Par de idiomas"
+            value={form.idioma_origen && form.idioma_destino ? `${form.idioma_origen}|${form.idioma_destino}` : ''}
+            onChange={(e) => {
+              const [origen, destino] = e.target.value.split('|');
+              setForm({ ...form, idioma_origen: origen || '', idioma_destino: destino || '' });
+            }}
+            required
+          >
+            <option value="">Par de idiomas *</option>
+            {idiomas.map((i) => (
+              <option key={i.id} value={`${i.idioma_origen}|${i.idioma_destino}`}>
+                {i.idioma_origen} → {i.idioma_destino}
+              </option>
+            ))}
+          </select>
           <input name="tipo_documento" aria-label="Tipo de documento" placeholder="Tipo de documento" value={form.tipo_documento} onChange={handleChange} />
           <input name="palabras_estimadas" aria-label="Palabras estimadas" type="number" placeholder="Palabras estimadas" value={form.palabras_estimadas} onChange={handleChange} />
           <input name="precio_estimado" aria-label="Precio estimado en euros" type="number" step="0.01" placeholder="Precio estimado (€)" value={form.precio_estimado} onChange={handleChange} />

@@ -5,9 +5,12 @@ const { extraerPalabras } = require('../utils/extraerTexto');
 
 async function calcularPrecioEstimado(usuarioId, idiomaOrigen, idiomaDestino, palabras) {
   if (!palabras || palabras <= 0) return null;
+  // Comparación insensible a mayúsculas: el idioma de un presupuesto es texto libre
+  // (no un desplegable con la lista fija de Configuración), así que "inglés" debe
+  // seguir encontrando la tarifa configurada como "Inglés".
   const resultado = await pool.query(
     `SELECT tarifa_traduccion, tarifa_minima, palabras_minimas FROM idiomas_usuario
-     WHERE usuario_id=$1 AND idioma_origen=$2 AND idioma_destino=$3`,
+     WHERE usuario_id=$1 AND LOWER(idioma_origen)=LOWER($2) AND LOWER(idioma_destino)=LOWER($3)`,
     [usuarioId, idiomaOrigen, idiomaDestino]
   );
   if (resultado.rows.length === 0) return null;
