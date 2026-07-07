@@ -1,4 +1,22 @@
+const path = require('path');
+const fs = require('fs');
 const pool = require('../config/db');
+const { extraerPalabras } = require('../utils/extraerTexto');
+
+async function calcularPrecioEstimado(usuarioId, idiomaOrigen, idiomaDestino, palabras) {
+  if (!palabras || palabras <= 0) return null;
+  const resultado = await pool.query(
+    `SELECT tarifa_traduccion, tarifa_minima, palabras_minimas FROM idiomas_usuario
+     WHERE usuario_id=$1 AND idioma_origen=$2 AND idioma_destino=$3`,
+    [usuarioId, idiomaOrigen, idiomaDestino]
+  );
+  if (resultado.rows.length === 0) return null;
+  const { tarifa_traduccion, tarifa_minima, palabras_minimas } = resultado.rows[0];
+  const tarifa = Number(tarifa_traduccion);
+  if (!Number.isFinite(tarifa)) return null;
+  const aplicaMinima = palabras_minimas && palabras <= Number(palabras_minimas);
+  return aplicaMinima ? Math.max(palabras * tarifa, Number(tarifa_minima)) : palabras * tarifa;
+}
 
 async function listar(req, res) {
   try {
@@ -31,25 +49,60 @@ async function obtener(req, res) {
 
 async function crear(req, res) {
   try {
-    const {
-      cliente_id, idioma_origen, idioma_destino, tipo_documento,
-      palabras_estimadas, precio_estimado, notas
-    } = req.body;
+    const { cliente_id, idioma_origen, idioma_destino, tipo_documento, notas } = req.body;
+    let { palabras_estimadas, precio_estimado } = req.body;
 
     if (!cliente_id || !idioma_origen || !idioma_destino) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
     }
 
+    let nombre_archivo = null;
+    let url_archivo = null;
+
+    if (req.file) {
+      nombre_archivo = req.file.originalname;
+      url_archivo = `/uploads/presupuestos/cliente_${cliente_id}/${req.file.filename}`;
+
+      const palabras = await extraerPalabras(req.file.path);
+      if (palabras != null) {
+        palabras_estimadas = palabras;
+        const calculado = await calcularPrecioEstimado(req.usuario.id, idioma_origen, idioma_destino, palabras);
+        if (calculado != null) {
+          precio_estimado = calculado;
+        }
+      }
+    }
+
     const resultado = await pool.query(
       `INSERT INTO presupuestos
-        (cliente_id, idioma_origen, idioma_destino, tipo_documento, palabras_estimadas, precio_estimado, notas)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [cliente_id, idioma_origen, idioma_destino, tipo_documento, palabras_estimadas || null, precio_estimado || null, notas]
+        (cliente_id, idioma_origen, idioma_destino, tipo_documento, palabras_estimadas, precio_estimado, notas, nombre_archivo, url_archivo)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+      [cliente_id, idioma_origen, idioma_destino, tipo_documento, palabras_estimadas || null, precio_estimado || null, notas, nombre_archivo, url_archivo]
     );
     res.status(201).json(resultado.rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al crear presupuesto' });
+  }
+}
+
+async function descargar(req, res) {
+  try {
+    const { id } = req.params;
+    const resultado = await pool.query('SELECT nombre_archivo, url_archivo FROM presupuestos WHERE id=$1', [id]);
+    if (resultado.rows.length === 0 || !resultado.rows[0].url_archivo) {
+      return res.status(404).json({ error: 'Este presupuesto no tiene ningún archivo adjunto' });
+    }
+
+    const rutaArchivo = path.join(__dirname, '..', resultado.rows[0].url_archivo);
+    if (!fs.existsSync(rutaArchivo)) {
+      return res.status(404).json({ error: 'El archivo ya no existe en el servidor' });
+    }
+
+    res.download(rutaArchivo, resultado.rows[0].nombre_archivo);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al descargar el archivo' });
   }
 }
 
@@ -129,4 +182,4 @@ async function eliminar(req, res) {
   }
 }
 
-module.exports = { listar, obtener, crear, cambiarEstado, convertirEnEncargo, eliminar };
+module.exports = { listar, obtener, crear, descargar, cambiarEstado, convertirEnEncargo, eliminar };

@@ -24,13 +24,16 @@ async function obtener(req, res) {
 
 async function crear(req, res) {
   try {
-    const { nombre, email, telefono, empresa, notas } = req.body;
+    const { nombre, email, telefono, empresa, nif, direccion, notas } = req.body;
     if (!nombre) {
       return res.status(400).json({ error: 'El nombre es obligatorio' });
     }
+    if (!direccion) {
+      return res.status(400).json({ error: 'La dirección es obligatoria' });
+    }
     const resultado = await pool.query(
-      'INSERT INTO clientes (nombre, email, telefono, empresa, notas) VALUES ($1,$2,$3,$4,$5) RETURNING *',
-      [nombre, email, telefono, empresa, notas]
+      'INSERT INTO clientes (nombre, email, telefono, empresa, nif, direccion, notas) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *',
+      [nombre, email, telefono, empresa, nif, direccion, notas]
     );
     res.status(201).json(resultado.rows[0]);
   } catch (err) {
@@ -41,11 +44,14 @@ async function crear(req, res) {
 async function actualizar(req, res) {
   try {
     const { id } = req.params;
-    const { nombre, email, telefono, empresa, notas } = req.body;
+    const { nombre, email, telefono, empresa, nif, direccion, notas } = req.body;
+    if (!direccion) {
+      return res.status(400).json({ error: 'La dirección es obligatoria' });
+    }
     const resultado = await pool.query(
-      `UPDATE clientes SET nombre=$1, email=$2, telefono=$3, empresa=$4, notas=$5
-       WHERE id=$6 RETURNING *`,
-      [nombre, email, telefono, empresa, notas, id]
+      `UPDATE clientes SET nombre=$1, email=$2, telefono=$3, empresa=$4, nif=$5, direccion=$6, notas=$7
+       WHERE id=$8 RETURNING *`,
+      [nombre, email, telefono, empresa, nif, direccion, notas, id]
     );
     if (resultado.rows.length === 0) {
       return res.status(404).json({ error: 'Cliente no encontrado' });

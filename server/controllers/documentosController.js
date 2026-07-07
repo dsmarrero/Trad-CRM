@@ -57,6 +57,26 @@ async function subir(req, res) {
   }
 }
 
+async function descargar(req, res) {
+  try {
+    const { id } = req.params;
+    const documento = await pool.query('SELECT nombre_archivo, url_archivo FROM documentos WHERE id=$1', [id]);
+    if (documento.rows.length === 0) {
+      return res.status(404).json({ error: 'Documento no encontrado' });
+    }
+
+    const rutaArchivo = path.join(__dirname, '..', documento.rows[0].url_archivo);
+    if (!fs.existsSync(rutaArchivo)) {
+      return res.status(404).json({ error: 'El archivo ya no existe en el servidor' });
+    }
+
+    res.download(rutaArchivo, documento.rows[0].nombre_archivo);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al descargar el documento' });
+  }
+}
+
 async function eliminar(req, res) {
   try {
     const { id } = req.params;
@@ -78,4 +98,4 @@ async function eliminar(req, res) {
   }
 }
 
-module.exports = { listarPorEncargo, subir, eliminar };
+module.exports = { listarPorEncargo, subir, descargar, eliminar };

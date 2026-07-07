@@ -5,19 +5,10 @@ import { api } from '../services/api';
 import Breadcrumb from '../components/Breadcrumb';
 import Tabs from '../components/Tabs';
 import Drawer from '../components/Drawer';
+import { badgeEstado } from '../utils/estado';
 
 const TABS = ['Encargos', 'Documentos', 'Notas'];
 const ESTADOS = ['recibido', 'en_curso', 'entregado', 'facturado'];
-
-function badgeEstado(estado) {
-  const mapa = {
-    recibido:  'badge-pendiente',
-    en_curso:  'badge-en-curso',
-    entregado: 'badge-ok',
-    facturado: 'badge-ok',
-  };
-  return mapa[estado] || 'badge-tipo';
-}
 
 export default function ClienteDetalle({ tabInicial = 'Encargos' }) {
   const { id } = useParams();

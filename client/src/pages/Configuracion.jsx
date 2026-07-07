@@ -13,6 +13,10 @@ export default function Configuracion() {
   const [perfil, setPerfil] = useState(null);
   const [passwords, setPasswords] = useState({ password_actual: '', password_nueva: '' });
 
+  const [facturacion, setFacturacion] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState(null);
+
   const [diasBloqueados, setDiasBloqueados] = useState([]);
   const [nuevaFecha, setNuevaFecha] = useState('');
   const [nuevoMotivo, setNuevoMotivo] = useState('');
@@ -34,6 +38,7 @@ export default function Configuracion() {
     cargarIdiomas();
     cargarDisponibilidad();
     api.get('/auth/perfil').then(setPerfil).catch((err) => setError(err.message));
+    api.get('/auth/configuracion').then(setFacturacion).catch((err) => setError(err.message));
     return () => { montado.current = false; };
   }, []);
 
@@ -63,6 +68,48 @@ export default function Configuracion() {
       await api.put('/auth/perfil/password', passwords);
       setPasswords({ password_actual: '', password_nueva: '' });
       mostrarMensaje('Contraseña actualizada.');
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  // --- Datos de facturación ---
+  useEffect(() => {
+    if (!facturacion || !facturacion.factura_logo_url) {
+      setLogoPreviewUrl(null);
+      return;
+    }
+    let objectUrl = null;
+    api.descargarArchivo('/auth/configuracion/logo').then((blob) => {
+      objectUrl = URL.createObjectURL(blob);
+      if (montado.current) setLogoPreviewUrl(objectUrl);
+    }).catch(() => {});
+    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [facturacion && facturacion.factura_logo_url]);
+
+  async function handleGuardarFacturacion(e) {
+    e.preventDefault();
+    setError('');
+    try {
+      const actualizado = await api.put('/auth/configuracion', facturacion);
+      setFacturacion(actualizado);
+      mostrarMensaje('Datos de facturación actualizados.');
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleSubirLogo(e) {
+    e.preventDefault();
+    if (!logoFile) return;
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('logo', logoFile);
+      const actualizado = await api.post('/auth/configuracion/logo', formData);
+      setFacturacion({ ...facturacion, factura_logo_url: actualizado.factura_logo_url });
+      setLogoFile(null);
+      mostrarMensaje('Logo actualizado.');
     } catch (err) {
       setError(err.message);
     }
@@ -181,6 +228,66 @@ export default function Configuracion() {
         </label>
         <button type="submit">Cambiar contraseña</button>
       </form>
+
+      <h3>Datos de facturación</h3>
+      {facturacion && (
+        <>
+          <form onSubmit={handleGuardarFacturacion} className="form-configuracion">
+            <label>
+              Nombre / razón social
+              <input value={facturacion.factura_nombre || ''}
+                onChange={(e) => setFacturacion({ ...facturacion, factura_nombre: e.target.value })} />
+            </label>
+            <label>
+              Dirección
+              <input value={facturacion.factura_direccion || ''}
+                onChange={(e) => setFacturacion({ ...facturacion, factura_direccion: e.target.value })} />
+            </label>
+            <label>
+              Ciudad
+              <input value={facturacion.factura_ciudad || ''}
+                onChange={(e) => setFacturacion({ ...facturacion, factura_ciudad: e.target.value })} />
+            </label>
+            <label>
+              NIF
+              <input value={facturacion.factura_nif || ''}
+                onChange={(e) => setFacturacion({ ...facturacion, factura_nif: e.target.value })} />
+            </label>
+            <label>
+              Email de facturación
+              <input type="email" value={facturacion.factura_email || ''}
+                onChange={(e) => setFacturacion({ ...facturacion, factura_email: e.target.value })} />
+            </label>
+            <label>
+              Teléfono
+              <input value={facturacion.factura_telefono || ''}
+                onChange={(e) => setFacturacion({ ...facturacion, factura_telefono: e.target.value })} />
+            </label>
+            <label>
+              Método de pago
+              <textarea value={facturacion.factura_metodo_pago || ''}
+                onChange={(e) => setFacturacion({ ...facturacion, factura_metodo_pago: e.target.value })} />
+            </label>
+            <label>
+              Color primario
+              <input type="color" value={facturacion.factura_color_primario || '#F5641E'}
+                onChange={(e) => setFacturacion({ ...facturacion, factura_color_primario: e.target.value })} />
+            </label>
+            <label>
+              Color secundario
+              <input type="color" value={facturacion.factura_color_secundario || '#E7F6EE'}
+                onChange={(e) => setFacturacion({ ...facturacion, factura_color_secundario: e.target.value })} />
+            </label>
+            <button type="submit">Guardar datos de facturación</button>
+          </form>
+
+          <form onSubmit={handleSubirLogo} className="form-configuracion form-idiomas">
+            {logoPreviewUrl && <img src={logoPreviewUrl} alt="Logo actual" style={{ maxHeight: '60px' }} />}
+            <input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files[0] || null)} />
+            <button type="submit" disabled={!logoFile}>Subir logo</button>
+          </form>
+        </>
+      )}
 
       <h3>Añadir par de idiomas</h3>
       <form onSubmit={handleAñadirIdioma} className="form-configuracion form-idiomas">

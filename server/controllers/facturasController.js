@@ -45,10 +45,34 @@ async function generarNumero(cliente) {
   return `F-${año}-${String(siguiente).padStart(3, '0')}`;
 }
 
+const TIPOS_IMPUESTO_VALIDOS = ['exento', 'iva', 'igic'];
+
 async function crear(req, res) {
   const { encargo_id, importe, fecha_pago } = req.body;
+  const tipo_impuesto = req.body.tipo_impuesto || 'exento';
+  const porcentaje_impuesto = req.body.porcentaje_impuesto ?? 0;
+  const aplica_retencion_irpf = !!req.body.aplica_retencion_irpf;
+  const porcentaje_retencion_irpf = req.body.porcentaje_retencion_irpf ?? 0;
+
   if (!encargo_id || !importe) {
     return res.status(400).json({ error: 'Faltan campos obligatorios' });
+  }
+  if (!TIPOS_IMPUESTO_VALIDOS.includes(tipo_impuesto)) {
+    return res.status(400).json({ error: 'Tipo de impuesto no válido' });
+  }
+  const porcentaje = Number(porcentaje_impuesto);
+  if (Number.isNaN(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+    return res.status(400).json({ error: 'El porcentaje de impuesto debe estar entre 0 y 100' });
+  }
+  if (tipo_impuesto === 'exento' && porcentaje !== 0) {
+    return res.status(400).json({ error: 'Una factura exenta no puede llevar porcentaje de impuesto' });
+  }
+  const porcentajeRetencion = Number(porcentaje_retencion_irpf);
+  if (Number.isNaN(porcentajeRetencion) || porcentajeRetencion < 0 || porcentajeRetencion > 100) {
+    return res.status(400).json({ error: 'El porcentaje de retención de IRPF debe estar entre 0 y 100' });
+  }
+  if (!aplica_retencion_irpf && porcentajeRetencion !== 0) {
+    return res.status(400).json({ error: 'No se puede indicar un porcentaje de retención si no está activada' });
   }
 
   const cliente = await pool.connect();
@@ -58,9 +82,9 @@ async function crear(req, res) {
     const numero = await generarNumero(cliente);
 
     const resultado = await cliente.query(
-      `INSERT INTO facturas (encargo_id, numero, importe, fecha_pago)
-       VALUES ($1,$2,$3,$4) RETURNING *`,
-      [encargo_id, numero, importe, fecha_pago || null]
+      `INSERT INTO facturas (encargo_id, numero, importe, fecha_pago, tipo_impuesto, porcentaje_impuesto, aplica_retencion_irpf, porcentaje_retencion_irpf)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [encargo_id, numero, importe, fecha_pago || null, tipo_impuesto, porcentaje, aplica_retencion_irpf, porcentajeRetencion]
     );
 
     // marcar el encargo como facturado
@@ -72,6 +96,71 @@ async function crear(req, res) {
     await cliente.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Error al crear factura' });
+  } finally {
+    cliente.release();
+  }
+}
+
+async function actualizar(req, res) {
+  const { id } = req.params;
+  const { encargo_id, importe } = req.body;
+  const tipo_impuesto = req.body.tipo_impuesto || 'exento';
+  const porcentaje_impuesto = req.body.porcentaje_impuesto ?? 0;
+  const aplica_retencion_irpf = !!req.body.aplica_retencion_irpf;
+  const porcentaje_retencion_irpf = req.body.porcentaje_retencion_irpf ?? 0;
+
+  if (!encargo_id || !importe) {
+    return res.status(400).json({ error: 'Faltan campos obligatorios' });
+  }
+  if (!TIPOS_IMPUESTO_VALIDOS.includes(tipo_impuesto)) {
+    return res.status(400).json({ error: 'Tipo de impuesto no válido' });
+  }
+  const porcentaje = Number(porcentaje_impuesto);
+  if (Number.isNaN(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+    return res.status(400).json({ error: 'El porcentaje de impuesto debe estar entre 0 y 100' });
+  }
+  if (tipo_impuesto === 'exento' && porcentaje !== 0) {
+    return res.status(400).json({ error: 'Una factura exenta no puede llevar porcentaje de impuesto' });
+  }
+  const porcentajeRetencion = Number(porcentaje_retencion_irpf);
+  if (Number.isNaN(porcentajeRetencion) || porcentajeRetencion < 0 || porcentajeRetencion > 100) {
+    return res.status(400).json({ error: 'El porcentaje de retención de IRPF debe estar entre 0 y 100' });
+  }
+  if (!aplica_retencion_irpf && porcentajeRetencion !== 0) {
+    return res.status(400).json({ error: 'No se puede indicar un porcentaje de retención si no está activada' });
+  }
+
+  const cliente = await pool.connect();
+  try {
+    await cliente.query('BEGIN');
+
+    const actual = await cliente.query('SELECT encargo_id FROM facturas WHERE id=$1 FOR UPDATE', [id]);
+    if (actual.rows.length === 0) {
+      await cliente.query('ROLLBACK');
+      return res.status(404).json({ error: 'Factura no encontrada' });
+    }
+    const encargoAnterior = actual.rows[0].encargo_id;
+
+    const resultado = await cliente.query(
+      `UPDATE facturas SET
+        encargo_id=$1, importe=$2, tipo_impuesto=$3, porcentaje_impuesto=$4,
+        aplica_retencion_irpf=$5, porcentaje_retencion_irpf=$6
+       WHERE id=$7 RETURNING *`,
+      [encargo_id, importe, tipo_impuesto, porcentaje, aplica_retencion_irpf, porcentajeRetencion, id]
+    );
+
+    // si se reasigna la factura a otro encargo, sincronizar el estado de ambos
+    if (String(encargo_id) !== String(encargoAnterior)) {
+      await cliente.query(`UPDATE encargos SET estado='entregado' WHERE id=$1`, [encargoAnterior]);
+      await cliente.query(`UPDATE encargos SET estado='facturado' WHERE id=$1`, [encargo_id]);
+    }
+
+    await cliente.query('COMMIT');
+    res.json(resultado.rows[0]);
+  } catch (err) {
+    await cliente.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar factura' });
   } finally {
     cliente.release();
   }
@@ -147,7 +236,8 @@ async function exportar(req, res) {
     const where = condiciones.length > 0 ? `WHERE ${condiciones.join(' AND ')}` : '';
 
     const resultado = await pool.query(
-      `SELECT f.numero, f.fecha_emision, f.fecha_pago, f.importe, f.estado_pago,
+      `SELECT f.numero, f.fecha_emision, f.fecha_pago, f.importe, f.tipo_impuesto, f.porcentaje_impuesto,
+              f.aplica_retencion_irpf, f.porcentaje_retencion_irpf, f.estado_pago,
               c.nombre AS cliente_nombre, e.tipo_documento
        FROM facturas f
        JOIN encargos e ON f.encargo_id = e.id
@@ -157,10 +247,21 @@ async function exportar(req, res) {
       params
     );
 
-    const cabecera = ['Numero', 'Fecha emision', 'Fecha pago', 'Importe', 'Estado pago', 'Cliente', 'Tipo documento'];
-    const filas = resultado.rows.map((f) => [
-      f.numero, f.fecha_emision, f.fecha_pago, f.importe, f.estado_pago, f.cliente_nombre, f.tipo_documento
-    ].map(escaparCSV).join(','));
+    const cabecera = [
+      'Numero', 'Fecha emision', 'Fecha pago', 'Base imponible', 'Impuesto', 'Porcentaje impuesto',
+      'Retencion IRPF %', 'Total a cobrar', 'Estado pago', 'Cliente', 'Tipo documento'
+    ];
+    const filas = resultado.rows.map((f) => {
+      const base = Number(f.importe);
+      const impuesto = base * (Number(f.porcentaje_impuesto) / 100);
+      const retencion = f.aplica_retencion_irpf ? base * (Number(f.porcentaje_retencion_irpf) / 100) : 0;
+      const total = base + impuesto - retencion;
+      return [
+        f.numero, f.fecha_emision, f.fecha_pago, f.importe, f.tipo_impuesto, f.porcentaje_impuesto,
+        f.aplica_retencion_irpf ? f.porcentaje_retencion_irpf : '0', total.toFixed(2), f.estado_pago,
+        f.cliente_nombre, f.tipo_documento
+      ].map(escaparCSV).join(',');
+    });
 
     const csv = [cabecera.join(','), ...filas].join('\n');
 
@@ -173,4 +274,4 @@ async function exportar(req, res) {
   }
 }
 
-module.exports = { listar, obtener, crear, marcarPagada, eliminar, exportar, enviarRecordatorio };
+module.exports = { listar, obtener, crear, actualizar, marcarPagada, eliminar, exportar, enviarRecordatorio };
