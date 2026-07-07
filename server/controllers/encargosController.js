@@ -49,7 +49,7 @@ async function crear(req, res) {
       `INSERT INTO encargos
         (cliente_id, idioma_origen, idioma_destino, tipo_documento, estado, fecha_entrega, precio, notas)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-      [cliente_id, idioma_origen, idioma_destino, tipo_documento, estado || 'recibido', fecha_entrega || null, precio, notas]
+      [cliente_id, idioma_origen, idioma_destino, tipo_documento, estado || 'recibido', fecha_entrega || null, precio === '' ? null : precio, notas]
     );
     res.status(201).json(resultado.rows[0]);
   } catch (err) {
@@ -71,7 +71,7 @@ async function actualizar(req, res) {
         cliente_id=$1, idioma_origen=$2, idioma_destino=$3, tipo_documento=$4,
         estado=$5, fecha_entrega=$6, precio=$7, notas=$8
        WHERE id=$9 RETURNING *`,
-      [cliente_id, idioma_origen, idioma_destino, tipo_documento, estado, fecha_entrega || null, precio, notas, id]
+      [cliente_id, idioma_origen, idioma_destino, tipo_documento, estado, fecha_entrega || null, precio === '' ? null : precio, notas, id]
     );
     if (resultado.rows.length === 0) {
       return res.status(404).json({ error: 'Encargo no encontrado' });
