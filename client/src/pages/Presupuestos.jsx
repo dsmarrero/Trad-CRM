@@ -1,6 +1,14 @@
 import { useEffect, useState } from 'react';
+import { Plus, FileSearch } from 'lucide-react';
 import { api } from '../services/api';
 import { useCrud } from '../hooks/useCrud';
+import { useFiltroTexto } from '../hooks/useFiltroTexto';
+import Drawer from '../components/Drawer';
+import PageHeader from '../components/PageHeader';
+import Button from '../components/Button';
+import EmptyState from '../components/EmptyState';
+import SearchInput from '../components/SearchInput';
+import Skeleton from '../components/Skeleton';
 
 const VACIO = {
   cliente_id: '', idioma_origen: '', idioma_destino: '',
@@ -11,7 +19,12 @@ export default function Presupuestos() {
   const { items: presupuestos, error, setError, cargando, cargar, crear, eliminar } = useCrud('/presupuestos');
   const [clientes, setClientes] = useState([]);
   const [form, setForm] = useState(VACIO);
+  const [archivo, setArchivo] = useState(null);
   const [info, setInfo] = useState('');
+  const [drawerAbierto, setDrawerAbierto] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
+
+  const presupuestosFiltrados = useFiltroTexto(presupuestos, busqueda, ['cliente_nombre', 'tipo_documento']);
 
   useEffect(() => {
     api.get('/clientes').then(setClientes).catch((err) => setError(err.message));
@@ -21,12 +34,43 @@ export default function Presupuestos() {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
+  function handleNuevo() {
+    setForm(VACIO);
+    setArchivo(null);
+    setDrawerAbierto(true);
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     try {
-      await crear(form);
+      if (archivo) {
+        // El orden importa: multer necesita cliente_id antes que el archivo
+        // en el multipart para poder resolver la carpeta de destino.
+        const formData = new FormData();
+        Object.entries(form).forEach(([clave, valor]) => formData.append(clave, valor));
+        formData.append('archivo', archivo);
+        await crear(formData);
+      } else {
+        await crear(form);
+      }
       setForm(VACIO);
+      setArchivo(null);
+      setDrawerAbierto(false);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleDescargar(id, nombreArchivo) {
+    try {
+      const blob = await api.descargarArchivo(`/presupuestos/${id}/descargar`);
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      enlace.download = nombreArchivo;
+      enlace.click();
+      URL.revokeObjectURL(url);
     } catch (err) {
       setError(err.message);
     }
@@ -61,27 +105,30 @@ export default function Presupuestos() {
     }
   }
 
+  function cerrarDrawer() {
+    setDrawerAbierto(false);
+    setForm(VACIO);
+    setArchivo(null);
+  }
+
   return (
     <div className="pagina-presupuestos">
-      <h2>Presupuestos</h2>
+      <PageHeader
+        titulo="Presupuestos"
+        accion={<Button variante="primario" onClick={handleNuevo}><Plus size={16} /> Nuevo presupuesto</Button>}
+      />
       {error && <div className="error-msg">{error}</div>}
       {info && <div className="ok-msg">{info}</div>}
 
-      <form onSubmit={handleSubmit} className="form-presupuesto">
-        <select name="cliente_id" aria-label="Cliente" value={form.cliente_id} onChange={handleChange} required>
-          <option value="">Selecciona cliente *</option>
-          {clientes.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-        </select>
-        <input name="idioma_origen" aria-label="Idioma origen" placeholder="Idioma origen *" value={form.idioma_origen} onChange={handleChange} required />
-        <input name="idioma_destino" aria-label="Idioma destino" placeholder="Idioma destino *" value={form.idioma_destino} onChange={handleChange} required />
-        <input name="tipo_documento" aria-label="Tipo de documento" placeholder="Tipo de documento" value={form.tipo_documento} onChange={handleChange} />
-        <input name="palabras_estimadas" aria-label="Palabras estimadas" type="number" placeholder="Palabras estimadas" value={form.palabras_estimadas} onChange={handleChange} />
-        <input name="precio_estimado" aria-label="Precio estimado en euros" type="number" step="0.01" placeholder="Precio estimado (€)" value={form.precio_estimado} onChange={handleChange} />
-        <input name="notas" aria-label="Notas" placeholder="Notas" value={form.notas} onChange={handleChange} />
-        <button type="submit">Crear presupuesto</button>
-      </form>
+      <SearchInput value={busqueda} onChange={setBusqueda} placeholder="Buscar por cliente o documento..." />
 
-      {cargando ? <p>Cargando...</p> : (
+      {cargando ? <Skeleton columnas={6} /> : presupuestosFiltrados.length === 0 ? (
+        <EmptyState
+          icono={FileSearch}
+          texto={busqueda ? 'Ningún presupuesto coincide con la búsqueda.' : 'Todavía no tienes presupuestos. Crea el primero.'}
+          accion={!busqueda && <Button variante="secundario" onClick={handleNuevo}>Crear presupuesto</Button>}
+        />
+      ) : (
       <table>
         <thead>
           <tr>
@@ -89,12 +136,29 @@ export default function Presupuestos() {
           </tr>
         </thead>
         <tbody>
-          {presupuestos.map((p) => (
+          {presupuestosFiltrados.map((p) => (
             <tr key={p.id}>
               <td>{p.cliente_nombre}</td>
               <td>{p.idioma_origen} → {p.idioma_destino}</td>
-              <td>{p.tipo_documento || '-'}</td>
-              <td>{p.precio_estimado != null ? Number(p.precio_estimado).toFixed(2) + ' €' : '-'}</td>
+              <td>
+                {p.tipo_documento || '-'}
+                {p.nombre_archivo && (
+                  <>
+                    {' '}
+                    <button className="enlace-documento" onClick={() => handleDescargar(p.id, p.nombre_archivo)}>
+                      {p.nombre_archivo}
+                    </button>
+                  </>
+                )}
+              </td>
+              <td>
+                {p.precio_estimado != null ? Number(p.precio_estimado).toFixed(2) + ' €' : '-'}
+                {p.palabras_estimadas != null && (
+                  <>
+                    {' '}<span className="badge-palabras">{p.palabras_estimadas} palabras</span>
+                  </>
+                )}
+              </td>
               <td>
                 <span className={
                   p.estado === 'aceptado' ? 'badge-ok' : p.estado === 'rechazado' ? 'badge-pendiente' : 'badge-tipo'
@@ -105,20 +169,41 @@ export default function Presupuestos() {
               <td>
                 {p.estado === 'pendiente' && (
                   <>
-                    <button onClick={() => handleConvertir(p.id)}>Convertir en encargo</button>
-                    <button onClick={() => handleCambiarEstado(p.id, 'rechazado')}>Rechazar</button>
+                    <Button variante="fantasma" onClick={() => handleConvertir(p.id)}>Convertir en encargo</Button>
+                    <Button variante="fantasma" onClick={() => handleCambiarEstado(p.id, 'rechazado')}>Rechazar</Button>
                   </>
                 )}
-                <button onClick={() => handleEliminar(p.id)}>Eliminar</button>
+                <Button variante="fantasma" onClick={() => handleEliminar(p.id)}>Eliminar</Button>
               </td>
             </tr>
           ))}
-          {presupuestos.length === 0 && (
-            <tr><td colSpan="6">Sin presupuestos todavía.</td></tr>
-          )}
         </tbody>
       </table>
       )}
+
+      <Drawer abierto={drawerAbierto} onCerrar={cerrarDrawer} titulo="Nuevo presupuesto">
+        {error && <div className="error-msg">{error}</div>}
+        <form onSubmit={handleSubmit} className="drawer-body">
+          <select name="cliente_id" aria-label="Cliente" value={form.cliente_id} onChange={handleChange} required>
+            <option value="">Selecciona cliente *</option>
+            {clientes.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+          </select>
+          <input name="idioma_origen" aria-label="Idioma origen" placeholder="Idioma origen *" value={form.idioma_origen} onChange={handleChange} required />
+          <input name="idioma_destino" aria-label="Idioma destino" placeholder="Idioma destino *" value={form.idioma_destino} onChange={handleChange} required />
+          <input name="tipo_documento" aria-label="Tipo de documento" placeholder="Tipo de documento" value={form.tipo_documento} onChange={handleChange} />
+          <input name="palabras_estimadas" aria-label="Palabras estimadas" type="number" placeholder="Palabras estimadas" value={form.palabras_estimadas} onChange={handleChange} />
+          <input name="precio_estimado" aria-label="Precio estimado en euros" type="number" step="0.01" placeholder="Precio estimado (€)" value={form.precio_estimado} onChange={handleChange} />
+          <input name="notas" aria-label="Notas" placeholder="Notas" value={form.notas} onChange={handleChange} />
+          <input type="file" aria-label="Documento a traducir (opcional)" onChange={(e) => setArchivo(e.target.files[0])} />
+          {archivo && (
+            <span className="ayuda-calculo">
+              Al subir "{archivo.name}" se calculan las palabras y el precio estimado automáticamente
+              (sustituye los valores manuales de arriba).
+            </span>
+          )}
+          <Button type="submit" variante="primario">Crear presupuesto</Button>
+        </form>
+      </Drawer>
     </div>
   );
 }
