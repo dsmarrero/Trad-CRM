@@ -23,7 +23,7 @@
 ### Task 1: Tokens de color (paleta grafito)
 
 **Files:**
-- Modify: `client/src/index.css`
+- Modify: `client/src/App.css` (corregido: los tokens `:root`/`:root[data-tema="dark"]` viven al principio de `App.css`, no en `index.css` — `index.css` solo tiene el reset de `box-sizing`/`body`. `App.css` se importa después de `index.css` desde `main.jsx`, así que cualquier duplicado en `index.css` queda anulado por la cascada.)
 
 **Interfaces:**
 - Consumes: nada (es la base de todo el sistema de tokens).
@@ -31,7 +31,7 @@
 
 - [ ] **Step 1: Cambiar los tokens del tema claro**
 
-En `client/src/index.css`, dentro del bloque `:root { ... }` (líneas 3-21), sustituir:
+En `client/src/App.css`, dentro del bloque `:root { ... }` (líneas 3-21), sustituir:
 
 ```css
   --naranja: #F5641E;
@@ -63,7 +63,7 @@ por:
 
 - [ ] **Step 2: Cambiar los tokens del tema oscuro**
 
-En el mismo archivo, dentro de `:root[data-tema="dark"] { ... }` (líneas 23-34), sustituir:
+En el mismo archivo (`client/src/App.css`), dentro de `:root[data-tema="dark"] { ... }` (líneas 23-34), sustituir:
 
 ```css
   --oscuro-2: #202840;
@@ -85,7 +85,15 @@ por:
   --fondo: #0E0F12;
 ```
 
-- [ ] **Step 3: Verificar visualmente**
+- [ ] **Step 3: Confirmar que `index.css` no define estos tokens**
+
+```bash
+grep -n "oscuro\|--fondo\|--borde" client/src/index.css
+```
+
+Expected: sin resultados. Si `index.css` ya define alguno de estos tokens (por ejemplo, por un cambio manual anterior), hay que eliminarlos de `index.css` en este mismo paso — solo debe existir una fuente de verdad (`App.css`) para evitar que la cascada (index.css se importa antes que App.css en `main.jsx`) anule el cambio silenciosamente.
+
+- [ ] **Step 4: Verificar visualmente**
 
 Ejecutar:
 
@@ -99,7 +107,7 @@ Abrir la URL que indique Vite, iniciar sesión y comprobar:
 - La página de login (`/login` o pantalla inicial si no hay sesión) tiene el mismo fondo grafito en su gradiente, sin tono azulado.
 - Cambiar el tema con el botón sol/luna del sidebar y confirmar que el tema oscuro también usa grafito, no azul, en fondo y bordes.
 
-- [ ] **Step 4: Lint**
+- [ ] **Step 5: Lint**
 
 ```bash
 npm run lint
@@ -107,10 +115,10 @@ npm run lint
 
 Expected: sin errores (es un cambio solo de CSS, no debería afectar al lint de JS).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add client/src/index.css
+git add client/src/App.css
 git commit -m "style: paleta grafito neutro en lugar de azul-marino"
 ```
 
