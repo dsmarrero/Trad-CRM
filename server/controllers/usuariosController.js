@@ -4,6 +4,18 @@ const path = require('path');
 const fs = require('fs');
 const pool = require('../config/db');
 
+async function listarUsuarios(req, res) {
+  try {
+    const resultado = await pool.query(
+      'SELECT id, nombre, email, rol, creado_en FROM usuarios ORDER BY id'
+    );
+    res.json(resultado.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al listar usuarios' });
+  }
+}
+
 async function registrar(req, res) {
   try {
     const { nombre, email, password, rol } = req.body;
@@ -220,5 +232,5 @@ async function eliminarUsuario(req, res) {
 
 module.exports = {
   registrar, login, logout, obtenerConfig, actualizarConfig, subirLogo, descargarLogo,
-  obtenerPerfil, actualizarPerfil, cambiarPassword, eliminarUsuario
+  obtenerPerfil, actualizarPerfil, cambiarPassword, eliminarUsuario, listarUsuarios
 };

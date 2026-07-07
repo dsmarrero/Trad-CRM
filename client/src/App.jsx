@@ -11,6 +11,7 @@ import ClienteDetalle from './pages/ClienteDetalle';
 import Configuracion from './pages/Configuracion';
 import Calendario from './pages/Calendario';
 import Presupuestos from './pages/Presupuestos';
+import Administracion from './pages/Administracion';
 import './App.css';
 
 export default function App() {
@@ -120,6 +121,14 @@ export default function App() {
             element={
               <RutaPrivada>
                 <Configuracion />
+              </RutaPrivada>
+            }
+          />
+          <Route
+            path="/administracion"
+            element={
+              <RutaPrivada>
+                <Administracion />
               </RutaPrivada>
             }
           />

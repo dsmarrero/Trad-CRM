@@ -6,7 +6,7 @@ import { useTema } from '../hooks/useTema';
 import {
   LayoutDashboard, Users, Calendar, Receipt,
   FileText, Settings, ClipboardList, FileSearch,
-  StickyNote, ChevronLeft, Sun, Moon, Menu, X
+  StickyNote, ChevronLeft, Sun, Moon, Menu, X, ShieldCheck
 } from 'lucide-react';
 
 const ENLACES_GLOBAL = [
@@ -17,8 +17,10 @@ const ENLACES_GLOBAL = [
   { to: '/calendario',    label: 'Calendario',    Icon: Calendar },
   { to: '/facturas',      label: 'Facturas',      Icon: Receipt },
   { to: '/documentos',    label: 'Documentos',    Icon: FileText },
-  { to: '/configuracion', label: 'Configuración', Icon: Settings },
 ];
+
+const ENLACE_ADMIN = { to: '/administracion', label: 'Administración', Icon: ShieldCheck };
+const ENLACE_CONFIGURACION = { to: '/configuracion', label: 'Configuración', Icon: Settings };
 
 const enlacesCliente = (id) => [
   { to: `/clientes/${id}`,            label: 'Encargos',   Icon: ClipboardList },
@@ -80,7 +82,11 @@ export default function Sidebar() {
           </nav>
         ) : (
           <nav className="sidebar-nav">
-            {ENLACES_GLOBAL.map(({ to, label, Icon }) => (
+            {[
+              ...ENLACES_GLOBAL,
+              ...(usuario?.rol === 'admin' ? [ENLACE_ADMIN] : []),
+              ENLACE_CONFIGURACION
+            ].map(({ to, label, Icon }) => (
               <NavLink
                 key={to}
                 to={to}
