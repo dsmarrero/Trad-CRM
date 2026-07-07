@@ -53,7 +53,10 @@ async function login(req, res) {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      // 'none' en producción: frontend (Netlify) y backend (Railway) viven en dominios
+      // distintos, y 'lax' bloquea la cookie en peticiones cross-site (fetch/XHR).
+      // Requiere secure:true, que ya es el caso en producción (HTTPS en ambos).
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 8 * 60 * 60 * 1000
     });
     res.json({ usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol } });
@@ -66,7 +69,7 @@ function logout(req, res) {
   res.clearCookie('token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax'
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   });
   res.json({ mensaje: 'Sesión cerrada' });
 }

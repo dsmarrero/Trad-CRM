@@ -7,3 +7,6 @@ build/
 uploads/
 graphify-out/
 .tokensave/
+
+# Local Netlify folder
+.netlify
