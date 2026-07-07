@@ -183,12 +183,14 @@ form button:disabled {
 }
 
 .sidebar-link {
+  position: relative;
   color: #C7CCDA;
   text-decoration: none;
   font-weight: 600;
   font-size: 0.9rem;
   padding: 0.65rem 0.9rem;
   border-radius: 10px;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .sidebar-link:hover {
@@ -197,8 +199,19 @@ form button:disabled {
 }
 
 .sidebar-link.activo {
+  background: rgba(245, 100, 30, 0.14);
+  color: var(--naranja);
+}
+
+.sidebar-link.activo::before {
+  content: '';
+  position: absolute;
+  left: -0.9rem;
+  top: 0.15rem;
+  bottom: 0.15rem;
+  width: 3px;
+  border-radius: 2px;
   background: var(--naranja);
-  color: white;
 }
 
 .sidebar-footer {
@@ -247,8 +260,8 @@ form button:disabled {
 
 .panel-contenido {
   flex: 1;
-  padding: 2.5rem;
-  max-width: 1100px;
+  padding: 3rem 3.5rem;
+  max-width: 1280px;
   min-width: 0;
 }
 
@@ -541,12 +554,13 @@ th, td {
 }
 
 th {
-  background: var(--oscuro);
-  color: white;
+  background: var(--fondo);
+  color: var(--gris);
   font-weight: 700;
   text-transform: uppercase;
   font-size: 0.72rem;
   letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--borde);
 }
 
 tr:last-child td { border-bottom: none; }
@@ -584,9 +598,9 @@ td select {
 
 .badge-ok, .badge-pendiente, .badge-tipo {
   display: inline-block;
-  padding: 0.25rem 0.7rem;
+  padding: 0.2rem 0.6rem;
   border-radius: 999px;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
 }
 
@@ -887,9 +901,9 @@ td select {
 /* BADGE EN CURSO */
 .badge-en-curso {
   display: inline-block;
-  padding: 0.25rem 0.7rem;
+  padding: 0.2rem 0.6rem;
   border-radius: 999px;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: #1D4ED8;
   background: #EFF6FF;
