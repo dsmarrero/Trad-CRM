@@ -22,7 +22,15 @@ function parsearPdfEnProcesoAparte(rutaArchivo) {
       { maxBuffer: 20 * 1024 * 1024 },
       (err, stdout) => {
         if (err) return reject(err);
-        const resultado = JSON.parse(stdout);
+        let resultado;
+        try {
+          resultado = JSON.parse(stdout);
+        } catch {
+          // Salida del proceso hijo corrupta (p. ej. un aviso de una dependencia
+          // mezclado con el JSON) — se rechaza la promesa en vez de dejar que el
+          // JSON.parse lance de forma asíncrona, lo que tumbaría el proceso entero.
+          return reject(new Error('El proceso de extracción de PDF devolvió una respuesta inválida'));
+        }
         if (resultado.error) return reject(new Error(resultado.error));
         resolve(resultado);
       }
