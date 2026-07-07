@@ -38,7 +38,7 @@ app.use('/api/recordatorios', recordatoriosRoutes);
 app.use('/api/presupuestos', presupuestosRoutes);
 
 app.get('/', (req, res) => {
-  res.json({ mensaje: 'API CMS Traductor Jurado funcionando' });
+  res.json({ mensaje: 'API Trad-CRM funcionando' });
 });
 
 // Resumen diario de entregas próximas y facturas impagadas (08:00 hora del servidor)

@@ -49,8 +49,7 @@ export default function Sidebar() {
 
       <aside className={'sidebar' + (abierta ? ' abierta' : '')}>
         <div className="sidebar-brand">
-          <span className="sidebar-brand-nombre">CMS</span>
-          <span className="sidebar-brand-sub">Traductor Jurado</span>
+          <span className="sidebar-brand-nombre">Trad-CRM</span>
           <button
             className="sidebar-toggle sidebar-toggle-cerrar"
             onClick={() => setAbierta(false)}

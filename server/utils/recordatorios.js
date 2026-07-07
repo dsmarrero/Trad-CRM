@@ -42,7 +42,7 @@ function construirHtmlResumenInterno(entregas, facturas) {
     : '<li>Sin facturas pendientes de cobro con retraso.</li>';
 
   return `
-    <h2>Resumen diario — CMS Traductor Jurado</h2>
+    <h2>Resumen diario — Trad-CRM</h2>
     <h3>Entregas en los próximos ${DIAS_ANTES_ENTREGA} días</h3>
     <ul>${filasEntregas}</ul>
     <h3>Facturas pendientes de cobro (+${DIAS_IMPAGO} días)</h3>

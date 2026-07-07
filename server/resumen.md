@@ -1,4 +1,4 @@
-# CMS Traductor Jurado — Resumen del proyecto
+# Trad-CRM — Resumen del proyecto
 
 **Stack:** React (Vite) + Express + PostgreSQL (Railway) + Netlify (pendiente de desplegar)
 
@@ -31,6 +31,6 @@
 
 ## Para retomar
 
-Decir "retomamos el CMS" y seguir desde despliegue o cualquier ajuste pendiente.
+Decir "retomamos el Trad-CRM" y seguir desde despliegue o cualquier ajuste pendiente.
 
 **Importante:** asegúrate de tener en tu carpeta local la última versión de todos los archivos entregados, y de haber ejecutado en Railway (`psql $DATABASE_URL`) todas las migraciones SQL generadas durante el proyecto.

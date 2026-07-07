@@ -23,7 +23,7 @@ export default function Login() {
   return (
     <div className="login-page">
       <form onSubmit={handleSubmit} className="login-form">
-        <h1>CMS Traductor Jurado</h1>
+        <h1>Trad-CRM</h1>
         <p>Inicia sesión para gestionar tus encargos</p>
 
         {error && <div className="error-msg">{error}</div>}

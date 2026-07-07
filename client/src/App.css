@@ -168,13 +168,6 @@ form button:disabled {
   color: var(--naranja);
 }
 
-.sidebar-brand-sub {
-  font-size: 0.75rem;
-  color: #9AA3B5;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
 .sidebar-nav {
   display: flex;
   flex-direction: column;
