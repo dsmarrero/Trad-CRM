@@ -3,9 +3,6 @@
 CRM para un traductor jurado: clientes, encargos, presupuestos, facturación con PDF, gestión de documentos con recuento automático de palabras (OCR incluido) y recordatorios por email.
 
 - **Frontend:** https://trad-crm.netlify.app 
-
-    (Cuenta de prueba: Email: usuario@prueba.com - Contraseña: prueba)
-
 - **API:** https://backend-production-4886.up.railway.app
 
 ## Funcionalidades
